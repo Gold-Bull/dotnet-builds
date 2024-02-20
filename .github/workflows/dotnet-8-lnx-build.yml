@@ -55,8 +55,7 @@ jobs:
       with:
         name: "nuget-packages-${{ env.RUNTIME_ARCH }}"
         path: |
-          ${{ github.workspace }}/dotnet/src/{runtime,aspnetcore}/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/**/*.nupkg
-          !${{ github.workspace }}/dotnet/src/{runtime,aspnetcore}/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/**/*.symbols.nupkg
+          dotnet/src/{runtime,aspnetcore}/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
         retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
 
     - name: Upload artifacts
@@ -64,7 +63,8 @@ jobs:
       with:
         name: "archives-${{ env.RUNTIME_ARCH }}"
         path: |
-          ${{ github.workspace }}/dotnet/src/{runtime,aspnetcore}/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/**/*.tar.*
+          dotnet/src/{runtime,aspnetcore}/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.tar.gz
+          dotnet/src/{runtime,aspnetcore}/artifacts/installers/${{ env.RUNTIME_CONFIGURATION }}/*.tar.gz
         retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
 
   test:
