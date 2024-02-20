@@ -1,0 +1,76 @@
+name: .NET 8 Build Steps
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'The version of .NET to build'
+        required: true
+        type: string
+      architecture:
+        description: 'The architecture to build for'
+        required: true
+        type: string
+
+env:
+  RUNTIME_OS: linux
+  RUNTIME_CONFIGURATION: Release
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: false
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  RUNTIME_ARCH: "${{ inputs.architecture }}"
+
+jobs:
+  build:
+    name: "Build"
+    runs-on: ubuntu-latest
+    container: ${{ vars.CONTAINER_IMAGE_S390X }}
+    steps:
+    - name: Checkout .NET repo
+      uses: actions/checkout@v4
+      with:
+        repository: dotnet/dotnet
+        submodules: true
+        ref: "v${{ inputs.version }}"
+        path: "${{ github.workspace }}/dotnet"
+
+    - name: Build .NET Runtime
+      run: |-
+        chmod +x ./build.sh
+        ./build.sh --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
+      working-directory: "${{ github.workspace }}/dotnet/src/runtime"
+      env:
+        ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
+
+    - name: Build ASP.NET Core
+      run: |-
+        chmod +x ./eng/build.sh
+        ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --all --no-build-nodejs --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:PostBuildSign=true /p:DotNetBuildFromSource=true
+      working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
+      env:
+        ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
+
+    - name: Upload NuGet Packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: "nuget-packages-${{ env.RUNTIME_ARCH }}"
+        path: |
+          ${{ github.workspace }}/dotnet/src/(runtime|aspnetcore)/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/**/*.nupkg
+          !${{ github.workspace }}/dotnet/src/(runtime|aspnetcore)/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/**/*.symbols.nupkg
+        retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: "archives-${{ env.RUNTIME_ARCH }}"
+        path: |
+          ${{ github.workspace }}/dotnet/src/(runtime|aspnetcore)/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/**/*.tar.*
+        retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
+
+  test:
+    name: "Test"
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Nothing configured
+        run: echo "No tests configured for .NET 8"
