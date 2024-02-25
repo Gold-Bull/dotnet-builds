@@ -39,6 +39,7 @@ jobs:
       run: |-
         chmod +x ./build.sh
         ./build.sh --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
+        ls -l ./artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/
       working-directory: "${{ github.workspace }}/dotnet/src/runtime"
       env:
         ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
@@ -47,6 +48,7 @@ jobs:
       run: |-
         chmod +x ./eng/build.sh
         ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --all --no-build-nodejs --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:PostBuildSign=true /p:DotNetBuildFromSource=true
+        ls -l ./artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/
       working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
       env:
         ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
@@ -56,8 +58,8 @@ jobs:
       with:
         name: "nuget-packages-${{ env.RUNTIME_ARCH }}"
         path: |-
-          ${{ github.workspace }}/dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
-          ${{ github.workspace }}/dotnet/src/aspnetcore/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
+          dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
+          dotnet/src/aspnetcore/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
         retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
 
     - name: Upload artifacts
@@ -65,10 +67,10 @@ jobs:
       with:
         name: "archives-${{ env.RUNTIME_ARCH }}"
         path: |-
-          ${{ github.workspace }}/dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.tar.gz
-          ${{ github.workspace }}/dotnet/src/runtime/artifacts/installers/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.tar.gz
-          ${{ github.workspace }}/dotnet/src/aspnetcore/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.tar.gz
-          ${{ github.workspace }}/dotnet/src/aspnetcore/artifacts/installers/${{ env.RUNTIME_CONFIGURATION }}/*.tar.gz
+          dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.tar.gz
+          dotnet/src/runtime/artifacts/installers/${{ env.RUNTIME_CONFIGURATION }}/*.tar.gz
+          dotnet/src/aspnetcore/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.tar.gz
+          dotnet/src/aspnetcore/artifacts/installers/${{ env.RUNTIME_CONFIGURATION }}/*.tar.gz
         retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
 
   test:
