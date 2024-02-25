@@ -13,20 +13,16 @@ ARG RUNTIME_FRAMEWORK_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-COPY tests/simple/ /root/tests/
-
-RUN --mount=type=bind,source=nuget-packages/,target=/root/nuget-packages/ <<EOT bash
+RUN --mount=type=bind,source=nuget-packages/,target=/root/nuget-packages/ --mount=type=bind,source=tests/simple/,target=/root/tests/,rw <<EOT bash
 set -ex
 cd /root/tests
-ls -l /root/tests/
-ls -l /root/nuget-packages/
 dotnet nuget add source /root/nuget-packages/ --name nuget-packages
 dotnet build /p:Configuration=$BUILD_CONFIGURATION /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION /p:SelfContained=true
 EOT
 
 #----------------------------------------------------------------------------------------------------
 
-FROM ghcr.io/gold-bull/dotnet-ubuntu-base:ubuntu-20.04-latest AS final
+FROM ghcr.io/gold-bull/dotnet-ubuntu-base:ubuntu-22.04-latest AS final
 
 ARG DOTNET_SDK_VERSION
 ARG BUILD_CONFIGURATION
@@ -34,7 +30,7 @@ ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN --mount=type=bind,source=/root/tests/bin/$BUILD_CONFIGURATION/net$DOTNET_SDK_VERSION/linux-$TARGETARCH/,target=/root/tests/,from=build <<EOT bash
+RUN --mount=type=bind,source=tests/simple/bin/$BUILD_CONFIGURATION/net$DOTNET_SDK_VERSION/linux-$TARGETARCH/,target=/root/tests/ <<EOT bash
 set -ex
 /root/tests/simple
 EOT
