@@ -19,7 +19,6 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: false
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   RUNTIME_ARCH: "${{ inputs.architecture }}"
-  NODEJS_VERSION: v14.21.3
 
 jobs:
   build:
@@ -45,13 +44,6 @@ jobs:
 
     - name: Build ASP.NET Core
       run: |-
-        echo "Installing node.js - ${NODEJS_VERSION}"
-        mkdir -p /opt/nodejs
-        chown -R root:root /opt/nodejs
-        chmod 0755 /opt/nodejs
-        wget -O - "https://nodejs.org/dist/${NODEJS_VERSION}/node-${NODEJS_VERSION}-linux-x64.tar.xz" | tar --strip-components 1 -C /opt/nodejs -Jx
-        export PATH=/opt/nodejs/bin:$PATH
-
         node -v
 
         chmod +x ./eng/build.sh
