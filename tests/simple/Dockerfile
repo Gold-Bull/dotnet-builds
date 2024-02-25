@@ -12,7 +12,8 @@ COPY tests/simple/ /root/tests/
 RUN <<EOT bash
 set -ex
 cd /root/tests
-dotnet build /p:Configuration=Release /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION /p:RestoreAdditionalProjectSources="https://api.nuget.org/v3/index.json;/root/nuget-packages/"
+dotnet restore /p:Configuration=Release /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION
+dotnet build /p:Configuration=Release /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION
 EOT
 
 #----------------------------------------------------------------------------------------------------
