@@ -44,6 +44,8 @@ jobs:
 
     - name: Build ASP.NET Core
       run: |-
+        ls -l /opt/nodejs/bin
+        export PATH=/opt/nodejs/bin:$PATH
         node -v
         which node
         chmod +x ./eng/build.sh
