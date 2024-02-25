@@ -15,8 +15,7 @@ cd /root/tests
 ls -l /root/tests/
 ls -l /root/nuget-packages/
 dotnet nuget add source /root/nuget-packages/ --name nuget-packages
-dotnet restore /p:Configuration=Release /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION
-dotnet build --no-restore /p:Configuration=Release /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION /p:SelfContained=true
+dotnet build /p:Configuration=Release /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION /p:SelfContained=true
 EOT
 
 #----------------------------------------------------------------------------------------------------
