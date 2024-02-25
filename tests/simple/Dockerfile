@@ -12,7 +12,8 @@ COPY tests/simple/ /root/tests/
 RUN <<EOT bash
 set -ex
 cd /root/tests
-dotnet restore --configfile \$PWD/NuGet.config /p:Configuration=Release /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION
+dotnet nuget add source /root/nuget-packages/ --name nuget-packages
+dotnet restore /p:Configuration=Release /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION
 dotnet build --no-restore /p:Configuration=Release /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION /p:SelfContained=true
 EOT
 
