@@ -35,15 +35,6 @@ jobs:
         ref: "v${{ inputs.version }}"
         path: "${{ github.workspace }}/dotnet"
 
-    - name: Restore cache
-      id: cache-restore
-      uses: actions/cache/restore@v4
-      with:
-        path: |
-          dotnet/src/runtime/artifacts
-          dotnet/src/aspnetcore/artifacts
-        key: ${{ env.RUNTIME_OS }}-${{ env.RUNTIME_ARCH }}-${{ env.RUNTIME_CONFIGURATION }}-${{ inputs.version }}
-
     - name: Build .NET Runtime
       run: |-
         chmod +x ./build.sh
@@ -59,15 +50,6 @@ jobs:
       working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
       env:
         ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
-
-    - name: Save cache
-      id: cache-save
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          dotnet/src/runtime/artifacts
-          dotnet/src/aspnetcore/artifacts
-        key: ${{ env.RUNTIME_OS }}-${{ env.RUNTIME_ARCH }}-${{ env.RUNTIME_CONFIGURATION }}-${{ inputs.version }}
 
     - name: Upload NuGet Packages
       uses: actions/upload-artifact@v4
