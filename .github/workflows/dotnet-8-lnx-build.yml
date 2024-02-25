@@ -44,33 +44,40 @@ jobs:
       env:
         ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
 
+    - name: Upload .NET Runtime NuGet Packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: "nuget-packages-${{ env.RUNTIME_ARCH }}-runtime"
+        path: dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
+        retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
+
+    - name: Upload .NET Runtime archives
+      uses: actions/upload-artifact@v4
+      with:
+        name: "archives-${{ env.RUNTIME_ARCH }}-runtime"
+        path: dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.tar.gz
+        retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
+
     - name: Build ASP.NET Core
       run: |-
         chmod +x ./eng/build.sh
         ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --all --no-build-nodejs --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:PostBuildSign=true /p:DotNetBuildFromSource=true
-        ls -l ./artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/
       working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
       env:
         ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
 
-    - name: Upload NuGet Packages
+    - name: Upload ASP.NET NuGet Packages
       uses: actions/upload-artifact@v4
       with:
-        name: "nuget-packages-${{ env.RUNTIME_ARCH }}"
-        path: |-
-          dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
-          dotnet/src/aspnetcore/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
+        name: "nuget-packages-${{ env.RUNTIME_ARCH }}-aspnet"
+        path: dotnet/src/aspnetcore/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
         retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
 
-    - name: Upload artifacts
+    - name: Upload ASP.NET archives
       uses: actions/upload-artifact@v4
       with:
-        name: "archives-${{ env.RUNTIME_ARCH }}"
-        path: |-
-          dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.tar.gz
-          dotnet/src/runtime/artifacts/installers/${{ env.RUNTIME_CONFIGURATION }}/*.tar.gz
-          dotnet/src/aspnetcore/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.tar.gz
-          dotnet/src/aspnetcore/artifacts/installers/${{ env.RUNTIME_CONFIGURATION }}/*.tar.gz
+        name: "archives-${{ env.RUNTIME_ARCH }}-aspnet"
+        path: dotnet/src/aspnetcore/artifacts/installers/${{ env.RUNTIME_CONFIGURATION }}/*.tar.gz
         retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
 
   test:
@@ -92,7 +99,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: nuget-packages-*
+          pattern: nuget-packages-${{ env.RUNTIME_ARCH }}-*
           merge-multiple: true
           path: ${{ github.workspace }}/nuget-packages
       
