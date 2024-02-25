@@ -1,21 +1,25 @@
-# syntax=docker/dockerfile:1 
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# syntax=docker/dockerfile:1
+ARG DOTNET_SDK_VERSION=8.0
+ARG BUILD_CONFIGURATION=Release
+
+#----------------------------------------------------------------------------------------------------
+
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:$DOTNET_SDK_VERSION AS build
 
 ARG TARGETARCH
 ARG RUNTIME_FRAMEWORK_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-COPY nuget-packages/ /root/nuget-packages/
 COPY tests/simple/ /root/tests/
 
-RUN <<EOT bash
+RUN --mount=type=bind,source=nuget-packages/,target=/root/nuget-packages/ <<EOT bash
 set -ex
 cd /root/tests
 ls -l /root/tests/
 ls -l /root/nuget-packages/
 dotnet nuget add source /root/nuget-packages/ --name nuget-packages
-dotnet build /p:Configuration=Release /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION /p:SelfContained=true
+dotnet build /p:Configuration=$BUILD_CONFIGURATION /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION /p:SelfContained=true
 EOT
 
 #----------------------------------------------------------------------------------------------------
@@ -26,7 +30,7 @@ ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN --mount=type=bind,target=/root/tests/,source=/root/tests/,from=build <<EOT bash
+RUN --mount=type=bind,source=/root/tests/bin/$BUILD_CONFIGURATION/net$DOTNET_SDK_VERSION/linux-$TARGETARCH/,target=/root/tests/,from=build <<EOT bash
 set -ex
-ls -l /root/tests/bin/Release/net8.0/linux-$TARGETARCH/
+/root/tests/simple
 EOT
