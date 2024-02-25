@@ -13,7 +13,9 @@ ARG RUNTIME_FRAMEWORK_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN --mount=type=bind,source=nuget-packages/,target=/root/nuget-packages/ --mount=type=bind,source=tests/simple/,target=/root/tests/,rw <<EOT bash
+COPY tests/simple/ /root/tests/
+
+RUN --mount=type=bind,source=nuget-packages/,target=/root/nuget-packages/ <<EOT bash
 set -ex
 cd /root/tests
 dotnet nuget add source /root/nuget-packages/ --name nuget-packages
@@ -30,7 +32,7 @@ ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN --mount=type=bind,source=tests/simple/bin/$BUILD_CONFIGURATION/net$DOTNET_SDK_VERSION/linux-$TARGETARCH/,target=/root/tests/ <<EOT bash
+RUN --mount=type=bind,source=/root/tests/simple/bin/$BUILD_CONFIGURATION/net$DOTNET_SDK_VERSION/linux-$TARGETARCH/,target=/root/tests/,from=build <<EOT bash
 set -ex
 /root/tests/simple
 EOT
