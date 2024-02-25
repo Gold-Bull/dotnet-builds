@@ -44,6 +44,8 @@ jobs:
 
     - name: Build ASP.NET Core
       run: |-
+        node -v
+        which node
         chmod +x ./eng/build.sh
         ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --all --restore --no-build
         ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --all --no-build-installers /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:PostBuildSign=true /p:DotNetBuildFromSource=true
