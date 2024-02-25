@@ -11,6 +11,7 @@ on:
   push:
       branches:
       - main
+      - feature/*
       - releases/*
   pull_request:
       branches:
