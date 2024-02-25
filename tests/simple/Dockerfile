@@ -24,7 +24,7 @@ EOT
 
 #----------------------------------------------------------------------------------------------------
 
-FROM ghcr.io/gold-bull/dotnet-ubuntu-base:ubuntu-22.04-latest AS final
+FROM ghcr.io/gold-bull/dotnet-runtime-base:ubuntu-20.04-latest AS final
 
 ARG DOTNET_SDK_VERSION
 ARG BUILD_CONFIGURATION
