@@ -39,7 +39,6 @@ jobs:
       run: |-
         chmod +x ./build.sh
         ./build.sh --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
-        ls -l ./artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/
       working-directory: "${{ github.workspace }}/dotnet/src/runtime"
       env:
         ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
