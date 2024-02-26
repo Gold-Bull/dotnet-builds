@@ -24,7 +24,7 @@ EOT
 
 #----------------------------------------------------------------------------------------------------
 
-FROM ghcr.io/gold-bull/dotnet-runtime-base:ubuntu-20.04-latest AS final
+FROM ghcr.io/gold-bull/dotnet-runtime-base:ubuntu-20.04-latest AS ubt20.04
 
 ARG DOTNET_SDK_VERSION
 ARG BUILD_CONFIGURATION
@@ -32,7 +32,26 @@ ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN --mount=type=bind,source=/root/tests/bin/$BUILD_CONFIGURATION/net$DOTNET_SDK_VERSION/linux-$TARGETARCH/,target=/root/tests/,from=build <<EOT bash
+COPY --from=build /root/tests/bin/$BUILD_CONFIGURATION/net$DOTNET_SDK_VERSION/linux-$TARGETARCH/ /root/tests/
+
+RUN <<EOT bash
+set -ex
+/root/tests/simple
+EOT
+
+#----------------------------------------------------------------------------------------------------
+
+FROM ghcr.io/gold-bull/dotnet-runtime-base:ubuntu-22.04-latest AS ubt22.04
+
+ARG DOTNET_SDK_VERSION
+ARG BUILD_CONFIGURATION
+ARG TARGETARCH
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+COPY --from=ubt20.04 /root/tests/ /root/tests/
+
+RUN <<EOT bash
 set -ex
 /root/tests/simple
 EOT
