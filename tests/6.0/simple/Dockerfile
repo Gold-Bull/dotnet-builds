@@ -50,7 +50,7 @@ ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-COPY --from=ubt18.04 /root/tests/bin/$BUILD_CONFIGURATION/net$DOTNET_SDK_VERSION/linux-$TARGETARCH/ /root/tests/
+COPY --from=ubt18.04 /root/tests/ /root/tests/
 
 RUN <<EOT bash
 set -ex
