@@ -57,7 +57,7 @@ jobs:
           echo "dotnet_sdk_version=${TMP_DOTNET_VERSION_SHORT}" >> "$GITHUB_OUTPUT"
           chmod +x ./build.sh
 
-          docker run -it --rm \
+          docker run -i --rm \
             --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
             --mount type=bind,src="${{ github.workspace }}/dotnet",dst=/dotnet \
             --workdir /dotnet/src/runtime \

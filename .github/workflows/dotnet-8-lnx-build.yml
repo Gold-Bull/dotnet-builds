@@ -79,7 +79,7 @@ jobs:
         run: |-
           chmod +x ./eng/build.sh
 
-          docker run -it --rm \
+          docker run -i --rm \
             --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
             --mount type=bind,src="${{ github.workspace }}/dotnet",dst=/dotnet \
             --workdir /dotnet/src/aspnetcore \
