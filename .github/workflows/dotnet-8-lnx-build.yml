@@ -26,6 +26,9 @@ jobs:
     name: "Build"
     runs-on: ubuntu-latest
     container: "ghcr.io/gold-bull/dotnet-build-deps:ubuntu-20.04-latest"
+    defaults:
+      run:
+        shell: bash
     outputs:
       dotnet_sdk_version: ${{ steps.dotnet_runtime.outputs.dotnet_sdk_version }}
     steps:
