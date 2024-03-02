@@ -95,7 +95,7 @@ jobs:
             --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} \
             --pack --all --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true \
             /p:SkipTestBuild=true /p:PostBuildSign=true \
-            /p:UrisToDownload='file:///dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/dotnet-runtime-${{ inputs.version }}-linux-${{ env.RUNTIME_ARCH }}.tar.gz;'
+            /p:UrisToDownload=\\\"file:///dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/dotnet-runtime-${{ inputs.version }}-linux-${{ env.RUNTIME_ARCH }}.tar.gz;\\\"
         working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
         #env:
         #  ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
