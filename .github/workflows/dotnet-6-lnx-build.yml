@@ -20,12 +20,13 @@ env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   RUNTIME_ARCH: "${{ inputs.architecture }}"
   PLATFORMS_TO_BUILD: "linux/${{ inputs.architecture }}"
+  DOCKER_IMAGE_TO_USE: "ghcr.io/gold-bull/dotnet-build-deps:ubuntu-18.04-latest"
 
 jobs:
   build:
     name: "Build"
     runs-on: ubuntu-latest
-    container: "ghcr.io/gold-bull/dotnet-build-deps:ubuntu-18.04-latest"
+    #container: "ghcr.io/gold-bull/dotnet-build-deps:ubuntu-18.04in22.04-latest"
     defaults:
       run:
         shell: bash
@@ -55,10 +56,18 @@ jobs:
           export TMP_DOTNET_VERSION_SHORT="${TMP_DOTNET_VERSION_FULL:0:3}"
           echo "dotnet_sdk_version=${TMP_DOTNET_VERSION_SHORT}" >> "$GITHUB_OUTPUT"
           chmod +x ./build.sh
-          ./build.sh --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
+
+          docker run -it --rm \
+            --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
+            --mount type=bind,src="${{ github.workspace }}/dotnet",dst=/dotnet \
+            --workdir /dotnet/src/runtime \
+            --network=host \
+            --entrypoint="./build.sh" \
+            ${DOCKER_IMAGE_TO_USE} \
+            --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
         working-directory: "${{ github.workspace }}/dotnet/src/runtime"
-        env:
-          ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
+        #env:
+        #  ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
 
       - name: Upload .NET Runtime NuGet Packages
         uses: actions/upload-artifact@v4
@@ -77,10 +86,18 @@ jobs:
       - name: Build ASP.NET Core
         run: |-
           chmod +x ./eng/build.sh
-          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --all --no-build-nodejs --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:PostBuildSign=true /p:DotNetBuildFromSource=true
+
+          docker run -it --rm \
+            --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
+            --mount type=bind,src="${{ github.workspace }}/dotnet",dst=/dotnet \
+            --workdir /dotnet/src/aspnetcore \
+            --network=host \
+            --entrypoint="./eng/build.sh" \
+            ${DOCKER_IMAGE_TO_USE} \
+            --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --all --no-build-nodejs --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:PostBuildSign=true /p:DotNetBuildFromSource=true
         working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
-        env:
-          ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
+        #env:
+        #  ROOTFS_DIR: "/crossfs/${{ env.RUNTIME_ARCH }}"
 
       - name: Upload ASP.NET NuGet Packages
         uses: actions/upload-artifact@v4
