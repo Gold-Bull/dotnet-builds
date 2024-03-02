@@ -91,7 +91,7 @@ jobs:
             --network=host \
             --entrypoint="./eng/build.sh" \
             ${DOCKER_IMAGE_TO_USE} \
-            --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --all --no-build-nodejs --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:PostBuildSign=true /p:DotNetBuildFromSource=true
+            --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --all --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:PostBuildSign=true
         working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
 
       - name: Upload ASP.NET NuGet Packages
