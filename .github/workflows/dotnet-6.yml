@@ -1,4 +1,4 @@
-name: .NET 8
+name: .NET 6
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       version:
         description: 'The version of .NET to build'
         required: true
-        default: '8.0.2'
+        default: '6.0.11'
         type: string
   push:
       branches:
@@ -14,8 +14,8 @@ on:
         - feature/*
         - releases/*
       paths:
-        - ".github/workflows/dotnet-8*.yml"
-        - "tests/**"
+        - ".github/workflows/dotnet-6*.yml"
+        - "tests/6.0/**"
   pull_request:
       branches:
         - main
@@ -28,10 +28,10 @@ jobs:
         architecture:
           - s390x
     name: "Build & Test (${{ matrix.architecture }})"
-    uses: ./.github/workflows/dotnet-8-lnx-build.yml
+    uses: ./.github/workflows/dotnet-6-lnx-build.yml
     with:
       architecture: ${{ matrix.architecture }}
-      version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '8.0.2' }}
+      version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '6.0.11' }}
 
   publish:
     if: ${{ startsWith(github.ref, 'refs/heads/releases/') }}
