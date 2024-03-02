@@ -49,7 +49,7 @@ jobs:
         id: dotnet_runtime
         run: |-
           export TMP_DOTNET_VERSION_FULL=${{ inputs.version }}
-          export TMP_DOTNET_VERSION_SHORT=`cut -d '.' -f 1,2 <<< "${TMP_DOTNET_VERSION_FULL}"`
+          export TMP_DOTNET_VERSION_SHORT="${TMP_DOTNET_VERSION_FULL:0:3}"
           echo "dotnet_sdk_version=${TMP_DOTNET_VERSION_SHORT}" >> "$GITHUB_ENV"
           chmod +x ./build.sh
           ./build.sh --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
