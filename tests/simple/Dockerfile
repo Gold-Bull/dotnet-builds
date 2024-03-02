@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG DOTNET_SDK_VERSION=8.0
+ARG DOTNET_SDK_VERSION
 ARG BUILD_CONFIGURATION=Release
 
 #----------------------------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ RUN --mount=type=bind,source=nuget-packages/,target=/root/nuget-packages/ <<EOT 
 set -ex
 cd /root/tests
 dotnet nuget add source /root/nuget-packages/ --name nuget-packages
-dotnet build /p:Configuration=$BUILD_CONFIGURATION /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION /p:SelfContained=true
+dotnet build /p:TargetFramework=net$DOTNET_SDK_VERSION /p:Configuration=$BUILD_CONFIGURATION /p:RuntimeIdentifier=linux-$TARGETARCH /p:RuntimeFrameworkVersion=$RUNTIME_FRAMEWORK_VERSION /p:SelfContained=true
 EOT
 
 #----------------------------------------------------------------------------------------------------
