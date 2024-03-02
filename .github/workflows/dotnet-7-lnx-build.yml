@@ -63,7 +63,8 @@ jobs:
             --network=host \
             --entrypoint="./build.sh" \
             ${DOCKER_IMAGE_TO_USE} \
-            --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
+            --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} \
+            --configuration ${RUNTIME_CONFIGURATION}
         working-directory: "${{ github.workspace }}/dotnet/src/runtime"
 
       - name: Upload .NET Runtime NuGet Packages
@@ -91,7 +92,10 @@ jobs:
             --network=host \
             --entrypoint="./eng/build.sh" \
             ${DOCKER_IMAGE_TO_USE} \
-            --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --all --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:PostBuildSign=true
+            --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} \
+            --pack --all --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true \
+            /p:SkipTestBuild=true /p:PostBuildSign=true \
+            /p:UrisToDownload="file:///dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/dotnet-runtime-${{ inputs.version }}-${{ env.RUNTIME_ARCH }}.tar.gz;"
         working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
 
       - name: Upload ASP.NET NuGet Packages
