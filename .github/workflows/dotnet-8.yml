@@ -34,12 +34,17 @@ jobs:
       version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '8.0.2' }}
 
   publish:
-    if: ${{ github.ref == 'refs/heads/releases/v8' }}
     name: "Publish"
-    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/releases/v8' }}
+
+    environment: packages-publish
     needs:
       - build-test
-    environment: packages-publish
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -52,4 +57,4 @@ jobs:
           dotnet nuget push "**/*linux-*.nupkg" \
           --skip-duplicate \
           --api-key ${{ secrets.GITHUB_TOKEN }} \
-          --source https://nuget.pkg.github.com/${{ github.repository_owner }}
+          --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
