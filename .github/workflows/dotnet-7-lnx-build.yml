@@ -18,6 +18,7 @@ env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: false
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_VERSION_TO_BUILD: "${{ inputs.version }}"
   RUNTIME_ARCH: "${{ inputs.architecture }}"
   PLATFORMS_TO_BUILD: "linux/${{ inputs.architecture }}"
   DOCKER_IMAGE_TO_USE: "ghcr.io/gold-bull/dotnet-build-deps:ubuntu-18.04-latest"
@@ -51,9 +52,7 @@ jobs:
       - name: Build .NET Runtime
         id: dotnet_runtime
         run: |-
-          export TMP_DOTNET_VERSION_FULL=${{ inputs.version }}
-          export TMP_DOTNET_VERSION_SHORT="${TMP_DOTNET_VERSION_FULL:0:3}"
-          echo "dotnet_sdk_version=${TMP_DOTNET_VERSION_SHORT}" >> "$GITHUB_OUTPUT"
+          echo "dotnet_sdk_version=${DOTNET_VERSION_TO_BUILD:0:3}" >> "$GITHUB_OUTPUT"
           chmod +x ./build.sh
 
           docker run -i --rm \
@@ -63,7 +62,8 @@ jobs:
             --network=host \
             --entrypoint="./build.sh" \
             ${DOCKER_IMAGE_TO_USE} \
-            --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
+            --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} \
+            --configuration ${RUNTIME_CONFIGURATION}
         working-directory: "${{ github.workspace }}/dotnet/src/runtime"
 
       - name: Upload .NET Runtime NuGet Packages
@@ -83,6 +83,8 @@ jobs:
       - name: Build ASP.NET Core
         run: |-
           chmod +x ./eng/build.sh
+          mkdir -p ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
+          cp "${{ github.workspace }}/dotnet/src/runtime/artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/dotnet-runtime-${DOTNET_VERSION_TO_BUILD}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
 
           docker run -i --rm \
             --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
@@ -91,7 +93,9 @@ jobs:
             --network=host \
             --entrypoint="./eng/build.sh" \
             ${DOCKER_IMAGE_TO_USE} \
-            --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --all --no-build-nodejs --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:PostBuildSign=true /p:DotNetBuildFromSource=true
+            --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} \
+            --pack --all --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true \
+            /p:SkipTestBuild=true /p:PostBuildSign=true /p:IgnoreYarnWarnings=true
         working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
 
       - name: Upload ASP.NET NuGet Packages
