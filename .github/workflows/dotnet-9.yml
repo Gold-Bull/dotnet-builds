@@ -6,7 +6,7 @@ on:
       version:
         description: 'The version of .NET to build'
         required: true
-        default: 'v9.0.0-preview.1.24080.9'
+        default: '9.0.0-preview.1.24080.9'
         type: string
   push:
       branches:
@@ -31,7 +31,7 @@ jobs:
     uses: ./.github/workflows/dotnet-9-lnx-build.yml
     with:
       architecture: ${{ matrix.architecture }}
-      version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || 'v9.0.0-preview.1.24080.9' }}
+      version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '9.0.0-preview.1.24080.9' }}
 
   publish:
     name: "Publish"
