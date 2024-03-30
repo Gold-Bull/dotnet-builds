@@ -1,0 +1,61 @@
+name: .NET 9
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The version of .NET to build'
+        required: true
+        default: 'v9.0.0-preview.1.24080.9'
+        type: string
+  push:
+      branches:
+        - main
+        - feature/*
+        - releases/v9
+      paths:
+        - ".github/workflows/dotnet-9*.yml"
+        - "tests/9.0/**"
+  pull_request:
+      branches:
+        - main
+        - releases/v9
+
+jobs:
+  build-test:
+    strategy:
+      matrix:
+        architecture:
+          - s390x
+    name: "Build & Test (${{ matrix.architecture }})"
+    uses: ./.github/workflows/dotnet-9-lnx-build.yml
+    with:
+      architecture: ${{ matrix.architecture }}
+      version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || 'v9.0.0-preview.1.24080.9' }}
+
+  publish:
+    name: "Publish"
+    if: ${{ github.ref == 'refs/heads/releases/v9' }}
+
+    environment: packages-publish
+    needs:
+      - build-test
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: nuget-packages-*
+          merge-multiple: true
+
+      - name: Upload Packages
+        run: |
+          rm -f *.symbols.nupkg
+          
+          dotnet nuget push "*.nupkg" \
+          --api-key ${{ secrets.GITHUB_TOKEN }} \
+          --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
