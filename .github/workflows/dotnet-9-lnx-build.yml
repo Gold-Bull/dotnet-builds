@@ -76,7 +76,7 @@ jobs:
         run: |-
           chmod +x ./eng/build.sh
           mkdir -p ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
-          cp "${{ github.workspace }}/dotnet/src/runtime/artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/dotnet-runtime-${DOTNET_VERSION_TO_BUILD}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
+          cp "${{ github.workspace }}/dotnet/src/runtime/artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/dotnet-runtime-${DOTNET_VERSION_TO_BUILD/-*/-dev}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
 
           docker run -i --rm \
             --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
