@@ -48,6 +48,7 @@ jobs:
           chmod +x ./build.sh
 
           docker run -i --rm \
+            --env PATH="/opt/nodejs_v14;\${PATH}" \
             --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
             --mount type=bind,src="${{ github.workspace }}/dotnet",dst=/dotnet \
             --workdir /dotnet/src/runtime \
