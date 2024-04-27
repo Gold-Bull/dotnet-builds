@@ -148,4 +148,5 @@ jobs:
           builder: ${{ steps.setup_buildx.outputs.name }}
           build-args: |
             RUNTIME_FRAMEWORK_VERSION=${{ inputs.version }}
-            DOTNET_SDK_VERSION=${{ needs.build.outputs.dotnet_sdk_version }}${{ needs.build.outputs.dotnet_sdk_preview == 'true' && '-preview' || '' }}
+            DOTNET_SDK_VERSION=${{ needs.build.outputs.dotnet_sdk_version }}
+            DOTNET_SDK_VERSION_SUFFIX=${{ needs.build.outputs.dotnet_sdk_preview == 'true' && '-preview' || '' }}

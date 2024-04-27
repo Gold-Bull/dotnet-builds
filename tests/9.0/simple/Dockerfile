@@ -1,10 +1,11 @@
 # syntax=docker/dockerfile:1
 ARG DOTNET_SDK_VERSION
+ARG DOTNET_SDK_VERSION_SUFFIX
 ARG BUILD_CONFIGURATION=Release
 
 #----------------------------------------------------------------------------------------------------
 
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:$DOTNET_SDK_VERSION AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:$DOTNET_SDK_VERSION$DOTNET_SDK_VERSION_SUFFIX AS build
 
 ARG DOTNET_SDK_VERSION
 ARG BUILD_CONFIGURATION
