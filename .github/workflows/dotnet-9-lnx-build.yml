@@ -61,7 +61,7 @@ jobs:
             --entrypoint="./build.sh" \
             ${DOCKER_IMAGE_TO_USE} \
             --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} \
-            --configuration ${RUNTIME_CONFIGURATION}
+            --configuration ${RUNTIME_CONFIGURATION} /p:SuppressFinalPackageVersion=true
         working-directory: "${{ github.workspace }}/dotnet/src/runtime"
 
       - name: Upload .NET Runtime NuGet Packages
@@ -96,7 +96,7 @@ jobs:
             ${DOCKER_IMAGE_TO_USE} \
             --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} \
             --pack --all --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true \
-            /p:SkipTestBuild=true /p:PostBuildSign=true
+            /p:SkipTestBuild=true /p:PostBuildSign=true /p:SuppressFinalPackageVersion=true
         working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
 
       - name: Upload ASP.NET NuGet Packages
