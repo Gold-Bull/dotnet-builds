@@ -32,6 +32,7 @@ jobs:
         shell: bash
     outputs:
       dotnet_sdk_version: ${{ steps.dotnet_runtime.outputs.dotnet_sdk_version }}
+      dotnet_sdk_preview: ${{ steps.dotnet_runtime.outputs.dotnet_sdk_preview }}
     steps:
       - name: Checkout .NET repo
         uses: actions/checkout@v4
@@ -44,6 +45,11 @@ jobs:
       - name: Build .NET Runtime
         id: dotnet_runtime
         run: |-
+          if [[ $DOTNET_VERSION_TO_BUILD =~ "-preview" ]]; then
+            echo "dotnet_sdk_preview=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "dotnet_sdk_preview=false" >> "$GITHUB_OUTPUT"
+          fi
           echo "dotnet_sdk_version=${DOTNET_VERSION_TO_BUILD:0:3}" >> "$GITHUB_OUTPUT"
           chmod +x ./build.sh
 
@@ -90,7 +96,7 @@ jobs:
             ${DOCKER_IMAGE_TO_USE} \
             --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} \
             --pack --all --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true \
-            /p:SkipTestBuild=true /p:PostBuildSign=true /p:IgnoreYarnWarnings=true
+            /p:SkipTestBuild=true /p:PostBuildSign=true
         working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
 
       - name: Upload ASP.NET NuGet Packages
@@ -142,4 +148,4 @@ jobs:
           builder: ${{ steps.setup_buildx.outputs.name }}
           build-args: |
             RUNTIME_FRAMEWORK_VERSION=${{ inputs.version }}
-            DOTNET_SDK_VERSION=${{ needs.build.outputs.dotnet_sdk_version }}
+            DOTNET_SDK_VERSION=${{ needs.build.outputs.dotnet_sdk_version }}${{ needs.build.outputs.dotnet_sdk_preview == 'true' && '-preview' || '' }}
