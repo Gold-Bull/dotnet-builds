@@ -55,8 +55,6 @@ jobs:
           echo "dotnet_sdk_version=${DOTNET_VERSION_TO_BUILD:0:3}" >> "$GITHUB_OUTPUT"
           chmod +x ./build.sh
 
-          sed -i '2iexport PATH="/opt/nodejs_v14;$PATH"' ./build.sh
-
           docker run -i --rm \
             --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
             --mount type=bind,src="${{ github.workspace }}/dotnet",dst=/dotnet \
@@ -85,6 +83,9 @@ jobs:
       - name: Build ASP.NET Core
         run: |-
           chmod +x ./eng/build.sh
+
+          sed -i '4iexport PATH="/opt/nodejs_v14/bin;$PATH"' ./eng/build.sh
+
           mkdir -p ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
           cp "${{ github.workspace }}/dotnet/src/runtime/artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/dotnet-runtime-${DOTNET_VERSION_TO_BUILD}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
 
