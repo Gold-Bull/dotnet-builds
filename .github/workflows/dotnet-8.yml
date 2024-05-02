@@ -1,13 +1,6 @@
 name: .NET 8
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'The version of .NET to build'
-        required: true
-        default: '8.0.0'
-        type: string
   push:
       branches:
         - main
@@ -21,8 +14,27 @@ on:
         - main
         - releases/v8
 
+env:
+  DOTNET_VERSION: "8.0.4"
+
 jobs:
+  pre-execution:
+    name: "Pre-execution"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    outputs:
+      dotnet_version: ${{ steps.information.outputs.dotnet_version }}
+    steps:
+      - name: Gather Information
+        id: information
+        run: |-
+          echo "dotnet_version=${{ env.DOTNET_VERSION }}" >> "$GITHUB_OUTPUT"
+
   build-test:
+    needs:
+      - pre-execution
     strategy:
       matrix:
         architecture:
@@ -31,7 +43,7 @@ jobs:
     uses: ./.github/workflows/dotnet-8-lnx-build.yml
     with:
       architecture: ${{ matrix.architecture }}
-      version: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version || '8.0.0' }}
+      version: ${{ needs.pre-execution.outputs.dotnet_version }}
 
   publish:
     name: "Publish"
@@ -39,10 +51,12 @@ jobs:
 
     environment: packages-publish
     needs:
+      - pre-execution
       - build-test
     permissions:
       contents: read
       packages: write
+      id-token: write
     runs-on: ubuntu-latest
 
     steps:
@@ -51,6 +65,14 @@ jobs:
         with:
           pattern: nuget-packages-*
           merge-multiple: true
+          path: "${{ github.workspace }}/nuget"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: archives-*
+          merge-multiple: true
+          path: "${{ github.workspace }}/archives"
 
       - name: Upload Packages
         run: |
@@ -59,3 +81,25 @@ jobs:
           dotnet nuget push "*.nupkg" \
           --api-key ${{ secrets.GITHUB_TOKEN }} \
           --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+        working-directory: "${{ github.workspace }}/nuget"
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Upload archives to blob
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az storage blob upload-batch \
+            --destination dotnet \
+            --source "${{ github.workspace }}/archives/" \
+            --account-name sasgrsv2cind59037 \
+            --auth-mode login \
+            --destination-path "${{ needs.pre-execution.outputs.dotnet_version }}/" \
+            --pattern "*.tar.gz" \
+            --validate-content
