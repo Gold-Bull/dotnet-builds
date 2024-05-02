@@ -91,11 +91,16 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
 
-      - name: Install and run azcopy
-        run: |-
-          wget -O azcopy_v10.tar.gz https://aka.ms/downloadazcopy-v10-linux && tar -xf azcopy_v10.tar.gz --strip-components=1
-          chmod +x ./azcopy
-          export AZCOPY_AUTO_LOGIN_TYPE=AZCLI
-          ./azcopy copy './*' 'https://sasgrsv2cind59037.blob.core.windows.net/dotnet/${{ needs.pre-execution.outputs.dotnet_version }}/'
-        working-directory: "${{ github.workspace }}/archives"
-  
+      - name: Upload archives to blob
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az storage blob upload-batch \
+            --destination dotnet \
+            --source "${{ github.workspace }}/archives/" \
+            --account-name sasgrsv2cind59037 \
+            --auth-mode login \
+            --destination-path "${{ needs.pre-execution.outputs.dotnet_version }}/" \
+            --pattern "*.tar.gz" \
+            --validate-content
