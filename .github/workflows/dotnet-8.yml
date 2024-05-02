@@ -80,6 +80,7 @@ jobs:
           dotnet nuget push "*.nupkg" \
           --api-key ${{ secrets.GITHUB_TOKEN }} \
           --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+        working-directory: "${{ github.workspace }}/nuget"
 
       - name: Azure login
         uses: azure/login@v2
@@ -93,4 +94,5 @@ jobs:
           wget -O azcopy_v10.tar.gz https://aka.ms/downloadazcopy-v10-linux && tar -xf azcopy_v10.tar.gz --strip-components=1
           chmod +x ./azcopy
           export AZCOPY_AUTO_LOGIN_TYPE=AZCLI
-          ./azcopy copy '${{ github.workspace }}/archives/*' 'https://sasgrsv2cind59037.blob.core.windows.net/dotnet/${{ needs.pre-execution.outputs.dotnet_version }}/'
+          ./azcopy copy './*' 'https://sasgrsv2cind59037.blob.core.windows.net/dotnet/${{ needs.pre-execution.outputs.dotnet_version }}/'
+        working-directory: "${{ github.workspace }}/archives"
