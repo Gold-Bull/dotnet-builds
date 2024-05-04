@@ -16,6 +16,7 @@ on:
 
 env:
   DOTNET_VERSION: "8.0.4"
+  DOTNET_SDK_VERSION: "8.0.204"
 
 jobs:
   pre-execution:
@@ -26,11 +27,13 @@ jobs:
         shell: bash
     outputs:
       dotnet_version: ${{ steps.information.outputs.dotnet_version }}
+      dotnet_sdk_version: ${{ steps.information.outputs.dotnet_sdk_version }}
     steps:
       - name: Gather Information
         id: information
         run: |-
           echo "dotnet_version=${{ env.DOTNET_VERSION }}" >> "$GITHUB_OUTPUT"
+          echo "dotnet_sdk_version=${{ env.DOTNET_SDK_VERSION }}" >> "$GITHUB_OUTPUT"
 
   build-test:
     needs:
@@ -43,7 +46,8 @@ jobs:
     uses: ./.github/workflows/dotnet-8-lnx-build.yml
     with:
       architecture: ${{ matrix.architecture }}
-      version: ${{ needs.pre-execution.outputs.dotnet_version }}
+      dotnet_runtime_version: ${{ needs.pre-execution.outputs.dotnet_version }}
+      dotnet_sdk_version: ${{ needs.pre-execution.outputs.dotnet_sdk_version }}
 
   publish:
     name: "Publish"
