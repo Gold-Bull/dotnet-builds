@@ -42,10 +42,18 @@ jobs:
     outputs:
       dotnet_version_short: ${{ steps.dotnet_runtime.outputs.dotnet_version_short }}
     env:
-      WORKSPACE_CODE_DIR: "${{ github.workspace }}/dotnet"
+      WORKSPACE_CODE_DIR: "/mnt/dotnet"
       WORKSPACE_PACKAGES_DIR: "/mnt/packages"
       WORKSPACE_DOWNLOADS_DIR: "/mnt/downloads"
     steps:
+      - name: Create required directories
+        run: |-
+          mkdir -p "${WORKSPACE_CODE_DIR}"
+          mkdir -p "${WORKSPACE_PACKAGES_DIR}"
+          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}"
+          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}"
+          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/Sdk/${DOTNET_SDK_VERSION_TO_BUILD}"
+
       - name: Checkout .NET repo
         uses: actions/checkout@v4
         with:
@@ -53,13 +61,6 @@ jobs:
           submodules: true
           ref: "v${{ env.DOTNET_VERSION_TO_BUILD }}"
           path: "${{ env.WORKSPACE_CODE_DIR }}"
-
-      - name: Create required directories
-        run: |-
-          mkdir -p "${WORKSPACE_PACKAGES_DIR}"
-          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}"
-          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}"
-          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/Sdk/${DOTNET_SDK_VERSION_TO_BUILD}"
 
       - name: Build .NET Runtime
         id: dotnet_runtime
@@ -85,7 +86,7 @@ jobs:
 
           chmod +x ./eng/build.sh
 
-          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack /p:DotNetAssetRootUrl=file://${WORKSPACE_DOWNLOADS_DIR}/
+          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack /p:SkipTestBuild=true /p:DotNetAssetRootUrl=file://${WORKSPACE_DOWNLOADS_DIR}/
 
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
           cp artifacts/installers/${RUNTIME_CONFIGURATION}/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
@@ -133,6 +134,13 @@ jobs:
           name: "archives-${{ env.RUNTIME_ARCH }}"
           path: "${{ env.WORKSPACE_DOWNLOADS_DIR }}"
           retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
+
+      - name: Cleanup
+        if: ${{ always() }}
+        run: |-
+          rm -rf "${WORKSPACE_CODE_DIR}"
+          rm -rf "${WORKSPACE_PACKAGES_DIR}"
+          rm -rf "${WORKSPACE_DOWNLOADS_DIR}"
 
   test:
     name: "Test"
