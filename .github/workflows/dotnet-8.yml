@@ -32,6 +32,8 @@ jobs:
       - name: Gather Information
         id: information
         run: |-
+          df -hT
+          
           echo "dotnet_version=${{ env.DOTNET_VERSION }}" >> "$GITHUB_OUTPUT"
           echo "dotnet_sdk_version=${{ env.DOTNET_SDK_VERSION }}" >> "$GITHUB_OUTPUT"
 

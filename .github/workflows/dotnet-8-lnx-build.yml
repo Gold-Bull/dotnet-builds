@@ -54,8 +54,6 @@ jobs:
 
       - name: Create required directories
         run: |-
-          df -hT
-          
           mkdir -p "${WORKSPACE_PACKAGES_DIR}"
           mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}"
           mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}"
