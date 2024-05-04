@@ -72,6 +72,9 @@ jobs:
 
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}
+
+          ./build.sh --clean
+          rm -rf .dotnet/
         working-directory: "${{ env.WORKSPACE_CODE_DIR }}/src/runtime"
 
       - name: Build ASP.NET Core
@@ -85,6 +88,9 @@ jobs:
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
           cp artifacts/installers/${RUNTIME_CONFIGURATION}/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
           cp artifacts/installers/${RUNTIME_CONFIGURATION}/aspnetcore_base_runtime.version ${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
+
+          ./eng/build.sh --clean
+          rm -rf .dotnet/
         working-directory: "${{ env.WORKSPACE_CODE_DIR }}/src/aspnetcore"
 
       - name: Build SDK
@@ -95,6 +101,9 @@ jobs:
 
           cp artifacts/packages/Release/NonShipping/*.zip ${WORKSPACE_DOWNLOADS_DIR}/Sdk/${DOTNET_SDK_VERSION_TO_BUILD}
           cp artifacts/packages/${SDK_CONF}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
+
+          ./build.sh --clean
+          rm -rf .dotnet/
         working-directory: "${{ env.WORKSPACE_CODE_DIR }}/src/sdk"
 
       - name: Build Installer
@@ -104,6 +113,9 @@ jobs:
           ./build.sh -c ${RUNTIME_CONFIGURATION} -a ${RUNTIME_ARCH} /p:HostRid=linux-x64 /p:PublicBaseURL=file://${WORKSPACE_DOWNLOADS_DIR}/
 
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}
+
+          ./build.sh --clean
+          rm -rf .dotnet/
         working-directory: "${{ env.WORKSPACE_CODE_DIR }}/src/installer"
 
       - name: Upload NuGet Packages
