@@ -42,10 +42,16 @@ jobs:
     outputs:
       dotnet_version_short: ${{ steps.dotnet_runtime.outputs.dotnet_version_short }}
     env:
-      WORKSPACE_CODE_DIR: "/mnt/dotnet"
-      WORKSPACE_PACKAGES_DIR: "/mnt/packages"
-      WORKSPACE_DOWNLOADS_DIR: "/mnt/downloads"
+      WORKSPACE_CODE_DIR: "${{ github.workspace }}/dotnet"
+      WORKSPACE_PACKAGES_DIR: "${{ github.workspace }}/packages"
+      WORKSPACE_DOWNLOADS_DIR: "${{ github.workspace }}/downloads"
     steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 4096
+          swap-size-mb: 16384
+      
       - name: Create required directories
         run: |-
           mkdir -p "${WORKSPACE_CODE_DIR}"
@@ -86,7 +92,7 @@ jobs:
 
           chmod +x ./eng/build.sh
 
-          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack /p:SkipTestBuild=true /p:DotNetAssetRootUrl=file://${WORKSPACE_DOWNLOADS_DIR}/
+          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --no-build-java /p:SkipTestBuild=true /p:DotNetAssetRootUrl=file://${WORKSPACE_DOWNLOADS_DIR}/
 
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
           cp artifacts/installers/${RUNTIME_CONFIGURATION}/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
@@ -138,9 +144,7 @@ jobs:
       - name: Cleanup
         if: ${{ always() }}
         run: |-
-          rm -rf "${WORKSPACE_CODE_DIR}"
-          rm -rf "${WORKSPACE_PACKAGES_DIR}"
-          rm -rf "${WORKSPACE_DOWNLOADS_DIR}"
+          rm -rf "${{ github.workspace }}/*"
 
   test:
     name: "Test"
