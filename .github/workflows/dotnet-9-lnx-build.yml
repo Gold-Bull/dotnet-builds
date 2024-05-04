@@ -15,102 +15,67 @@ on:
 env:
   RUNTIME_OS: linux
   RUNTIME_CONFIGURATION: Release
+  RUNTIME_ARCH: "${{ inputs.architecture }}"
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: false
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_VERSION_TO_BUILD: "${{ inputs.version }}"
-  RUNTIME_ARCH: "${{ inputs.architecture }}"
   PLATFORMS_TO_BUILD: "linux/${{ inputs.architecture }}"
-  DOCKER_IMAGE_TO_USE: "ghcr.io/gold-bull/dotnet-build-deps:ubuntu-20.04-latest"
 
 jobs:
   build:
     name: "Build"
     runs-on: ubuntu-latest
+    container:
+      image: "ghcr.io/gold-bull/dotnet-build-deps:ubuntu-20.04-latest"
     defaults:
       run:
         shell: bash
     outputs:
-      dotnet_sdk_version: ${{ steps.dotnet_runtime.outputs.dotnet_sdk_version }}
-      dotnet_sdk_preview: ${{ steps.dotnet_runtime.outputs.dotnet_sdk_preview }}
+      dotnet_version_short: ${{ steps.dotnet_runtime.outputs.dotnet_version_short }}
+    env:
+      WORKSPACE_CODE_DIR: "${{ github.workspace }}/dotnet"
+      WORKSPACE_PACKAGES_DIR: "${{ github.workspace }}/packages"
+      WORKSPACE_DOWNLOADS_DIR: "${{ github.workspace }}/downloads"
     steps:
       - name: Checkout .NET repo
         uses: actions/checkout@v4
         with:
           repository: dotnet/dotnet
           submodules: true
-          ref: "v${{ inputs.version }}"
-          path: "${{ github.workspace }}/dotnet"
+          ref: "v${{ env.DOTNET_VERSION_TO_BUILD }}"
+          path: "${{ env.WORKSPACE_CODE_DIR }}"
 
-      - name: Build .NET Runtime
+      - name: Create required directories
+        run: |-
+          mkdir -p "${WORKSPACE_PACKAGES_DIR}"
+          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}"
+
+      - name: Build .NET
         id: dotnet_runtime
         run: |-
-          if [[ $DOTNET_VERSION_TO_BUILD =~ "-preview" ]]; then
-            echo "dotnet_sdk_preview=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "dotnet_sdk_preview=false" >> "$GITHUB_OUTPUT"
-          fi
-          echo "dotnet_sdk_version=${DOTNET_VERSION_TO_BUILD:0:3}" >> "$GITHUB_OUTPUT"
+          echo "dotnet_version_short=${DOTNET_VERSION_TO_BUILD:0:3}" >> "$GITHUB_OUTPUT"
+          
+          export ROOTFS_DIR="/crossfs/${RUNTIME_ARCH}"
+
           chmod +x ./build.sh
 
-          docker run -i --rm \
-            --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
-            --mount type=bind,src="${{ github.workspace }}/dotnet",dst=/dotnet \
-            --workdir /dotnet/src/runtime \
-            --network=host \
-            --entrypoint="./build.sh" \
-            ${DOCKER_IMAGE_TO_USE} \
-            --subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} \
-            --configuration ${RUNTIME_CONFIGURATION}
-        working-directory: "${{ github.workspace }}/dotnet/src/runtime"
+          ./build.sh -sb --clean-while-building --use-mono-runtime /p:TargetOS=linux /p:TargetArchitecture=s390x
+        working-directory: "${{ env.WORKSPACE_CODE_DIR }}"
 
-      - name: Upload .NET Runtime NuGet Packages
+      #- name: Upload NuGet Packages
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: "nuget-packages-${{ env.RUNTIME_ARCH }}"
+      #    path: "${{ env.WORKSPACE_PACKAGES_DIR }}"
+      #    retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
+
+      - name: Upload Archives
         uses: actions/upload-artifact@v4
         with:
-          name: "nuget-packages-${{ env.RUNTIME_ARCH }}-runtime"
-          path: dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
-          retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
-
-      - name: Upload .NET Runtime archives
-        uses: actions/upload-artifact@v4
-        with:
-          name: "archives-${{ env.RUNTIME_ARCH }}-runtime"
-          path: dotnet/src/runtime/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.tar.gz
-          retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
-
-      - name: Build ASP.NET Core
-        run: |-
-          chmod +x ./eng/build.sh
-
-          sed -i '4iexport PATH="/opt/nodejs_v16;$PATH"' ./eng/build.sh
-
-          mkdir -p ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
-          cp "${{ github.workspace }}/dotnet/src/runtime/artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/dotnet-runtime-${DOTNET_VERSION_TO_BUILD/-*/-dev}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/dotnet-runtime-${DOTNET_VERSION_TO_BUILD}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz
-
-          docker run -i --rm \
-            --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
-            --mount type=bind,src="${{ github.workspace }}/dotnet",dst=/dotnet \
-            --workdir /dotnet/src/aspnetcore \
-            --network=host \
-            --entrypoint="./eng/build.sh" \
-            ${DOCKER_IMAGE_TO_USE} \
-            --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} \
-            --pack --all --no-build-java --no-build-installers /p:OnlyPackPlatformSpecificPackages=true \
-            /p:SkipTestBuild=true /p:PostBuildSign=true
-        working-directory: "${{ github.workspace }}/dotnet/src/aspnetcore"
-
-      - name: Upload ASP.NET NuGet Packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: "nuget-packages-${{ env.RUNTIME_ARCH }}-aspnet"
-          path: dotnet/src/aspnetcore/artifacts/packages/${{ env.RUNTIME_CONFIGURATION }}/Shipping/*.nupkg
-          retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
-
-      - name: Upload ASP.NET archives
-        uses: actions/upload-artifact@v4
-        with:
-          name: "archives-${{ env.RUNTIME_ARCH }}-aspnet"
-          path: dotnet/src/aspnetcore/artifacts/installers/${{ env.RUNTIME_CONFIGURATION }}/*.tar.gz
+          name: "archives-${{ env.RUNTIME_ARCH }}"
+          #path: "${{ env.WORKSPACE_DOWNLOADS_DIR }}"
+          path: "${{ env.WORKSPACE_CODE_DIR }}/artifacts"
           retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
 
   test:
@@ -133,7 +98,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: nuget-packages-${{ env.RUNTIME_ARCH }}-*
+          pattern: nuget-packages-${{ env.RUNTIME_ARCH }}
           merge-multiple: true
           path: ${{ github.workspace }}/nuget-packages
       
@@ -143,10 +108,9 @@ jobs:
           platforms: ${{ env.PLATFORMS_TO_BUILD }}
           provenance: false
           context: "${{ github.workspace }}"
-          file: "${{ github.workspace }}/tests/${{ needs.build.outputs.dotnet_sdk_version }}/simple/Dockerfile"
+          file: "${{ github.workspace }}/tests/${{ needs.build.outputs.dotnet_version_short }}/simple/Dockerfile"
           push: false
           builder: ${{ steps.setup_buildx.outputs.name }}
           build-args: |
             RUNTIME_FRAMEWORK_VERSION=${{ inputs.version }}
-            DOTNET_SDK_VERSION=${{ needs.build.outputs.dotnet_sdk_version }}
-            DOTNET_SDK_VERSION_SUFFIX=${{ needs.build.outputs.dotnet_sdk_preview == 'true' && '-preview' || '' }}
+            DOTNET_SDK_VERSION=${{ needs.build.outputs.dotnet_version_short }}
