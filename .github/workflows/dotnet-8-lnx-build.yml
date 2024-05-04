@@ -34,6 +34,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: "ghcr.io/gold-bull/dotnet-build-deps:ubuntu-20.04-latest"
+      volumes:
+        - /mnt:/mnt
     defaults:
       run:
         shell: bash
@@ -41,8 +43,8 @@ jobs:
       dotnet_version_short: ${{ steps.dotnet_runtime.outputs.dotnet_version_short }}
     env:
       WORKSPACE_CODE_DIR: "${{ github.workspace }}/dotnet"
-      WORKSPACE_PACKAGES_DIR: "${{ github.workspace }}/packages"
-      WORKSPACE_DOWNLOADS_DIR: "${{ github.workspace }}/downloads"
+      WORKSPACE_PACKAGES_DIR: "/mnt/packages"
+      WORKSPACE_DOWNLOADS_DIR: "/mnt/downloads"
     steps:
       - name: Checkout .NET repo
         uses: actions/checkout@v4
