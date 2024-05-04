@@ -58,6 +58,10 @@ jobs:
           
           export ROOTFS_DIR="/crossfs/${RUNTIME_ARCH}"
 
+          chmod +x ./prep.sh
+
+          ./prep.sh
+
           chmod +x ./build.sh
 
           ./build.sh --clean-while-building --use-mono-runtime -- /p:TargetOS=linux /p:TargetArchitecture=s390x
