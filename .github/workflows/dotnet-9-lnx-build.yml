@@ -60,7 +60,7 @@ jobs:
 
           chmod +x ./build.sh
 
-          ./build.sh -sb --clean-while-building --use-mono-runtime /p:TargetOS=linux /p:TargetArchitecture=s390x
+          ./build.sh --clean-while-building --use-mono-runtime -- /p:TargetOS=linux /p:TargetArchitecture=s390x
         working-directory: "${{ env.WORKSPACE_CODE_DIR }}"
 
       #- name: Upload NuGet Packages
