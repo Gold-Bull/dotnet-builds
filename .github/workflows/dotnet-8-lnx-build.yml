@@ -53,6 +53,10 @@ jobs:
       - name: Create required directories
         run: |-
           export PATH="/opt/nodejs_v16/bin;$PATH"
+          echo $PATH
+
+          /opt/nodejs_v16/bin/node --version
+          
           node --version
           
           mkdir -p "${WORKSPACE_MNT_CODE_DIR}"
