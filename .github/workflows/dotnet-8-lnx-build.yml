@@ -52,8 +52,9 @@ jobs:
     steps:
       - name: Create required directories
         run: |-
-          ls -l /opt/nodejs_v14/bin
-
+          export PATH="/opt/nodejs_v16/bin;$PATH"
+          node --version
+          
           mkdir -p "${WORKSPACE_MNT_CODE_DIR}"
           ln -s "${WORKSPACE_MNT_CODE_DIR}" "${WORKSPACE_CODE_DIR}"
           mkdir -p "${WORKSPACE_MNT_PACKAGES_DIR}"
