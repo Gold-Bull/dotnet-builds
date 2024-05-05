@@ -74,7 +74,7 @@ jobs:
 
           chmod +x ./build.sh
 
-          ./build.sh -subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} /p:MonoEnableLLVM=true
+          ./build.sh -subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
 
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}
