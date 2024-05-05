@@ -43,20 +43,21 @@ jobs:
       dotnet_version_short: ${{ steps.dotnet_runtime.outputs.dotnet_version_short }}
     env:
       WORKSPACE_CODE_DIR: "${{ github.workspace }}/dotnet"
-      WORKSPACE_PACKAGES_DIR: "/mnt/packages"
-      WORKSPACE_DOWNLOADS_DIR: "/mnt/downloads"
-      WORKSPACE_OUTPUT_DIR: "/mnt/output"
-      WORKSPACE_OUTPUT_ARTIFACTS_DIR: "/mnt/output/artifacts"
-      WORKSPACE_TMP_PACKAGES_DIR: "/mnt/output/packages"
-      WORKSPACE_TMP_DOTNET_DIR: "/mnt/output/dotnet"
+      WORKSPACE_MNT_CODE_DIR: "/mnt/dotnet"
+      WORKSPACE_MNT_PACKAGES_DIR: "/mnt/packages"
+      WORKSPACE_MNT_DOWNLOADS_DIR: "/mnt/downloads"
+      WORKSPACE_MNT_OUTPUT_DIR: "/mnt/output"
+      WORKSPACE_MNT_OUTPUT_PACKAGES_DIR: "/mnt/output/packages"
+      WORKSPACE_MNT_OUTPUT_DOTNET_DIR: "/mnt/output/dotnet"
     steps:
       - name: Create required directories
         run: |-
-          mkdir -p "${WORKSPACE_CODE_DIR}"
-          mkdir -p "${WORKSPACE_PACKAGES_DIR}"
-          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}"
-          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}"
-          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}/Sdk/${DOTNET_SDK_VERSION_TO_BUILD}"
+          mkdir -p "${WORKSPACE_MNT_CODE_DIR}"
+          ln -s "${WORKSPACE_MNT_CODE_DIR}" "${WORKSPACE_CODE_DIR}"
+          mkdir -p "${WORKSPACE_MNT_PACKAGES_DIR}"
+          mkdir -p "${WORKSPACE_MNT_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}"
+          mkdir -p "${WORKSPACE_MNT_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}"
+          mkdir -p "${WORKSPACE_MNT_DOWNLOADS_DIR}/Sdk/${DOTNET_SDK_VERSION_TO_BUILD}"
 
       - name: Checkout .NET repo
         uses: actions/checkout@v4
@@ -76,24 +77,21 @@ jobs:
           echo "Disk usage before build"
           df -h
 
-          ln -s ${WORKSPACE_OUTPUT_ARTIFACTS_DIR} artifacts
-          ln -s ${WORKSPACE_TMP_DOTNET_DIR} .dotnet
-          ln -s ${WORKSPACE_TMP_PACKAGES_DIR} .packages
+          ln -s ${WORKSPACE_MNT_OUTPUT_DOTNET_DIR} .dotnet
+          ln -s ${WORKSPACE_MNT_OUTPUT_PACKAGES_DIR} .packages
 
           chmod +x ./build.sh
 
           ./build.sh -subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
 
-          cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
-          cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}
+          cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_MNT_PACKAGES_DIR}
+          cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_MNT_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}
 
           echo "Disk usage after build"
           df -h
 
-          ls -la "${WORKSPACE_PACKAGES_DIR}"
-          ls -la "${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}"
-
-          rm -rf ./artifacts/*
+          ls -la "${WORKSPACE_MNT_PACKAGES_DIR}"
+          ls -la "${WORKSPACE_MNT_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}"
 
           echo "Disk usage after clean"
           df -h
@@ -107,25 +105,22 @@ jobs:
           export PATH="/opt/nodejs_v16/bin;$PATH"
           node --version
 
-          ln -s ${WORKSPACE_OUTPUT_ARTIFACTS_DIR} artifacts
-          ln -s ${WORKSPACE_TMP_DOTNET_DIR} .dotnet
-          ln -s ${WORKSPACE_TMP_PACKAGES_DIR} .packages
+          ln -s ${WORKSPACE_MNT_OUTPUT_DOTNET_DIR} .dotnet
+          ln -s ${WORKSPACE_MNT_OUTPUT_PACKAGES_DIR} .packages
 
           chmod +x ./eng/build.sh
 
           mkdir -p ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
-          cp "${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}/dotnet-runtime-${DOTNET_VERSION_TO_BUILD}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
+          cp "${WORKSPACE_MNT_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}/dotnet-runtime-${DOTNET_VERSION_TO_BUILD}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
 
-          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --no-build-java /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:DotNetAssetRootUrl=file://${WORKSPACE_DOWNLOADS_DIR}/
+          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --no-build-java /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:DotNetAssetRootUrl=file://${WORKSPACE_MNT_DOWNLOADS_DIR}/
 
           echo "Disk usage after build"
           df -h
 
-          cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
-          cp artifacts/installers/${RUNTIME_CONFIGURATION}/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
-          cp artifacts/installers/${RUNTIME_CONFIGURATION}/aspnetcore_base_runtime.version ${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
-
-          rm -rf ./artifacts/*
+          cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_MNT_PACKAGES_DIR}
+          cp artifacts/installers/${RUNTIME_CONFIGURATION}/*.tar.gz ${WORKSPACE_MNT_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
+          cp artifacts/installers/${RUNTIME_CONFIGURATION}/aspnetcore_base_runtime.version ${WORKSPACE_MNT_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
 
           echo "Disk usage after clean"
           df -h
@@ -136,9 +131,8 @@ jobs:
           echo "Disk usage before build"
           df -h
 
-          ln -s ${WORKSPACE_OUTPUT_ARTIFACTS_DIR} artifacts
-          ln -s ${WORKSPACE_TMP_DOTNET_DIR} .dotnet
-          ln -s ${WORKSPACE_TMP_PACKAGES_DIR} .packages
+          ln -s ${WORKSPACE_MNT_OUTPUT_DOTNET_DIR} .dotnet
+          ln -s ${WORKSPACE_MNT_OUTPUT_PACKAGES_DIR} .packages
 
           chmod +x ./build.sh
 
@@ -147,10 +141,8 @@ jobs:
           echo "Disk usage after build"
           df -h
 
-          cp artifacts/packages/Release/NonShipping/*.zip ${WORKSPACE_DOWNLOADS_DIR}/Sdk/${DOTNET_SDK_VERSION_TO_BUILD}
-          cp artifacts/packages/${SDK_CONF}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
-
-          rm -rf ./artifacts/*
+          cp artifacts/packages/Release/NonShipping/*.zip ${WORKSPACE_MNT_DOWNLOADS_DIR}/Sdk/${DOTNET_SDK_VERSION_TO_BUILD}
+          cp artifacts/packages/${SDK_CONF}/Shipping/*.nupkg ${WORKSPACE_MNT_PACKAGES_DIR}
 
           echo "Disk usage after clean"
           df -h
@@ -161,20 +153,17 @@ jobs:
           echo "Disk usage before build"
           df -h
 
-          ln -s ${WORKSPACE_OUTPUT_ARTIFACTS_DIR} artifacts
-          ln -s ${WORKSPACE_TMP_DOTNET_DIR} .dotnet
-          ln -s ${WORKSPACE_TMP_PACKAGES_DIR} .packages
+          ln -s ${WORKSPACE_MNT_OUTPUT_DOTNET_DIR} .dotnet
+          ln -s ${WORKSPACE_MNT_OUTPUT_PACKAGES_DIR} .packages
 
           chmod +x ./build.sh
 
-          ./build.sh -c ${RUNTIME_CONFIGURATION} -a ${RUNTIME_ARCH} /p:HostRid=linux-x64 /p:PublicBaseURL=file://${WORKSPACE_DOWNLOADS_DIR}/
+          ./build.sh -c ${RUNTIME_CONFIGURATION} -a ${RUNTIME_ARCH} /p:HostRid=linux-x64 /p:PublicBaseURL=file://${WORKSPACE_MNT_DOWNLOADS_DIR}/
 
           echo "Disk usage after build"
           df -h
 
-          cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}
-
-          rm -rf ./artifacts/*
+          cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_MNT_DOWNLOADS_DIR}
 
           echo "Disk usage after clean"
           df -h
@@ -184,23 +173,24 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: "nuget-packages-${{ env.RUNTIME_ARCH }}"
-          path: "${{ env.WORKSPACE_PACKAGES_DIR }}"
+          path: "${{ env.WORKSPACE_MNT_PACKAGES_DIR }}"
           retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
 
       - name: Upload Archives
         uses: actions/upload-artifact@v4
         with:
           name: "archives-${{ env.RUNTIME_ARCH }}"
-          path: "${{ env.WORKSPACE_DOWNLOADS_DIR }}"
+          path: "${{ env.WORKSPACE_MNT_DOWNLOADS_DIR }}"
           retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
 
       - name: Cleanup
         if: ${{ always() }}
         run: |-
           rm -rf "${WORKSPACE_CODE_DIR}"
-          rm -rf "${WORKSPACE_PACKAGES_DIR}"
-          rm -rf "${WORKSPACE_DOWNLOADS_DIR}"
-          rm -rf "${WORKSPACE_OUTPUT_DIR}"
+          rm -rf "${WORKSPACE_MNT_CODE_DIR}"
+          rm -rf "${WORKSPACE_MNT_PACKAGES_DIR}"
+          rm -rf "${WORKSPACE_MNT_DOWNLOADS_DIR}"
+          rm -rf "${WORKSPACE_MNT_OUTPUT_DIR}"
 
 
   test:
