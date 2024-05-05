@@ -52,6 +52,8 @@ jobs:
     steps:
       - name: Create required directories
         run: |-
+          ls -l /opt/
+          
           mkdir -p "${WORKSPACE_MNT_CODE_DIR}"
           ln -s "${WORKSPACE_MNT_CODE_DIR}" "${WORKSPACE_CODE_DIR}"
           mkdir -p "${WORKSPACE_MNT_PACKAGES_DIR}"
