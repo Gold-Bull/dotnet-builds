@@ -52,11 +52,7 @@ jobs:
     steps:
       - name: Create required directories
         run: |-
-          export PATH="/opt/nodejs_v16/bin;$PATH"
-          echo $PATH
-
-          /opt/nodejs_v16/bin/node --version
-          
+          export PATH="/opt/nodejs_v14/bin:$PATH"
           node --version
           
           mkdir -p "${WORKSPACE_MNT_CODE_DIR}"
@@ -108,7 +104,7 @@ jobs:
           echo "Disk usage before build"
           df -h
 
-          export PATH="/opt/nodejs_v16/bin;$PATH"
+          export PATH="/opt/nodejs_v14/bin:$PATH"
           node --version
 
           ln -s ${WORKSPACE_MNT_OUTPUT_PACKAGES_DIR} .packages
