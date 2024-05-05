@@ -52,9 +52,6 @@ jobs:
     steps:
       - name: Create required directories
         run: |-
-          export PATH="/opt/nodejs_v14/bin:$PATH"
-          node --version
-          
           mkdir -p "${WORKSPACE_MNT_CODE_DIR}"
           ln -s "${WORKSPACE_MNT_CODE_DIR}" "${WORKSPACE_CODE_DIR}"
           mkdir -p "${WORKSPACE_MNT_PACKAGES_DIR}"
@@ -114,7 +111,7 @@ jobs:
           mkdir -p ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
           cp "${WORKSPACE_MNT_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}/dotnet-runtime-${DOTNET_VERSION_TO_BUILD}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
 
-          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --no-build-java /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:DotNetAssetRootUrl=file://${WORKSPACE_MNT_DOWNLOADS_DIR}/
+          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --no-build-java /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:IgnoreYarnWarnings=true
 
           echo "Disk usage after build"
           df -h
