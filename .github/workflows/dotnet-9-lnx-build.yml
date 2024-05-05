@@ -35,9 +35,13 @@ jobs:
       dotnet_version_short: ${{ steps.dotnet_runtime.outputs.dotnet_version_short }}
     env:
       WORKSPACE_CODE_DIR: "${{ github.workspace }}/dotnet"
-      WORKSPACE_PACKAGES_DIR: "${{ github.workspace }}/packages"
-      WORKSPACE_DOWNLOADS_DIR: "${{ github.workspace }}/downloads"
+      WORKSPACE_MNT_CODE_DIR: "/mnt/dotnet"
     steps:
+      - name: Create required directories
+        run: |-
+          mkdir -p "${WORKSPACE_MNT_CODE_DIR}"
+          ln -s "${WORKSPACE_MNT_CODE_DIR}" "${WORKSPACE_CODE_DIR}"
+          
       - name: Checkout .NET repo
         uses: actions/checkout@v4
         with:
@@ -45,11 +49,6 @@ jobs:
           submodules: true
           ref: "v${{ env.DOTNET_VERSION_TO_BUILD }}"
           path: "${{ env.WORKSPACE_CODE_DIR }}"
-
-      - name: Create required directories
-        run: |-
-          mkdir -p "${WORKSPACE_PACKAGES_DIR}"
-          mkdir -p "${WORKSPACE_DOWNLOADS_DIR}"
 
       - name: Build .NET
         id: dotnet_runtime
@@ -64,7 +63,7 @@ jobs:
 
           chmod +x ./build.sh
 
-          ./build.sh --clean-while-building -- /p:TargetOS=linux /p:TargetArchitecture=s390x
+          ./build.sh -- /p:TargetOS=linux /p:TargetArchitecture=s390x
         working-directory: "${{ env.WORKSPACE_CODE_DIR }}"
 
       #- name: Upload NuGet Packages
@@ -81,6 +80,12 @@ jobs:
           #path: "${{ env.WORKSPACE_DOWNLOADS_DIR }}"
           path: "${{ env.WORKSPACE_CODE_DIR }}/artifacts"
           retention-days: ${{ startsWith(github.ref, 'refs/heads/releases/') && 30 || 7 }}
+
+      - name: Cleanup
+        if: ${{ always() }}
+        run: |-
+          rm -rf "${WORKSPACE_CODE_DIR}"
+          rm -rf "${WORKSPACE_MNT_CODE_DIR}"
 
   test:
     name: "Test"
