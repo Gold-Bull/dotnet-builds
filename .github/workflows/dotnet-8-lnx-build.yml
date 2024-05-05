@@ -45,6 +45,10 @@ jobs:
       WORKSPACE_CODE_DIR: "${{ github.workspace }}/dotnet"
       WORKSPACE_PACKAGES_DIR: "/mnt/packages"
       WORKSPACE_DOWNLOADS_DIR: "/mnt/downloads"
+      WORKSPACE_OUTPUT_DIR: "/mnt/output"
+      WORKSPACE_OUTPUT_ARTIFACTS_DIR: "/mnt/output/artifacts"
+      WORKSPACE_TMP_PACKAGES_DIR: "/mnt/output/packages"
+      WORKSPACE_TMP_DOTNET_DIR: "/mnt/output/dotnet"
     steps:
       - name: Create required directories
         run: |-
@@ -72,6 +76,10 @@ jobs:
           echo "Disk usage before build"
           df -h
 
+          ln -s ${WORKSPACE_OUTPUT_ARTIFACTS_DIR} artifacts
+          ln -s ${WORKSPACE_TMP_DOTNET_DIR} .dotnet
+          ln -s ${WORKSPACE_TMP_PACKAGES_DIR} .packages
+
           chmod +x ./build.sh
 
           ./build.sh -subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
@@ -85,8 +93,7 @@ jobs:
           ls -la "${WORKSPACE_PACKAGES_DIR}"
           ls -la "${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}"
 
-          ./build.sh --clean
-          rm -rf ./.dotnet/
+          rm -rf ./artifacts/*
 
           echo "Disk usage after clean"
           df -h
@@ -97,11 +104,14 @@ jobs:
           echo "Disk usage before build"
           df -h
 
-          ls -l /opt/nodejs_v14/bin
+          export PATH="/opt/nodejs_v16/bin;$PATH"
+          node --version
+
+          ln -s ${WORKSPACE_OUTPUT_ARTIFACTS_DIR} artifacts
+          ln -s ${WORKSPACE_TMP_DOTNET_DIR} .dotnet
+          ln -s ${WORKSPACE_TMP_PACKAGES_DIR} .packages
 
           chmod +x ./eng/build.sh
-
-          sed -i '4iexport PATH="/opt/nodejs_v14/bin;$PATH"' ./eng/build.sh
 
           mkdir -p ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
           cp "${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}/dotnet-runtime-${DOTNET_VERSION_TO_BUILD}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
@@ -115,8 +125,7 @@ jobs:
           cp artifacts/installers/${RUNTIME_CONFIGURATION}/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
           cp artifacts/installers/${RUNTIME_CONFIGURATION}/aspnetcore_base_runtime.version ${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
 
-          ./eng/build.sh --clean
-          rm -rf ./.dotnet/
+          rm -rf ./artifacts/*
 
           echo "Disk usage after clean"
           df -h
@@ -126,6 +135,10 @@ jobs:
         run: |-
           echo "Disk usage before build"
           df -h
+
+          ln -s ${WORKSPACE_OUTPUT_ARTIFACTS_DIR} artifacts
+          ln -s ${WORKSPACE_TMP_DOTNET_DIR} .dotnet
+          ln -s ${WORKSPACE_TMP_PACKAGES_DIR} .packages
 
           chmod +x ./build.sh
 
@@ -137,8 +150,7 @@ jobs:
           cp artifacts/packages/Release/NonShipping/*.zip ${WORKSPACE_DOWNLOADS_DIR}/Sdk/${DOTNET_SDK_VERSION_TO_BUILD}
           cp artifacts/packages/${SDK_CONF}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
 
-          ./build.sh --clean
-          rm -rf ./.dotnet/
+          rm -rf ./artifacts/*
 
           echo "Disk usage after clean"
           df -h
@@ -149,6 +161,10 @@ jobs:
           echo "Disk usage before build"
           df -h
 
+          ln -s ${WORKSPACE_OUTPUT_ARTIFACTS_DIR} artifacts
+          ln -s ${WORKSPACE_TMP_DOTNET_DIR} .dotnet
+          ln -s ${WORKSPACE_TMP_PACKAGES_DIR} .packages
+
           chmod +x ./build.sh
 
           ./build.sh -c ${RUNTIME_CONFIGURATION} -a ${RUNTIME_ARCH} /p:HostRid=linux-x64 /p:PublicBaseURL=file://${WORKSPACE_DOWNLOADS_DIR}/
@@ -158,8 +174,7 @@ jobs:
 
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}
 
-          ./build.sh --clean
-          rm -rf ./.dotnet/
+          rm -rf ./artifacts/*
 
           echo "Disk usage after clean"
           df -h
@@ -185,6 +200,7 @@ jobs:
           rm -rf "${WORKSPACE_CODE_DIR}"
           rm -rf "${WORKSPACE_PACKAGES_DIR}"
           rm -rf "${WORKSPACE_DOWNLOADS_DIR}"
+          rm -rf "${WORKSPACE_OUTPUT_DIR}"
 
 
   test:
