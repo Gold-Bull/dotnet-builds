@@ -77,7 +77,6 @@ jobs:
           echo "Disk usage before build"
           df -h
 
-          ln -s ${WORKSPACE_MNT_OUTPUT_DOTNET_DIR} .dotnet
           ln -s ${WORKSPACE_MNT_OUTPUT_PACKAGES_DIR} .packages
 
           chmod +x ./build.sh
@@ -105,7 +104,6 @@ jobs:
           export PATH="/opt/nodejs_v16/bin;$PATH"
           node --version
 
-          ln -s ${WORKSPACE_MNT_OUTPUT_DOTNET_DIR} .dotnet
           ln -s ${WORKSPACE_MNT_OUTPUT_PACKAGES_DIR} .packages
 
           chmod +x ./eng/build.sh
@@ -131,7 +129,6 @@ jobs:
           echo "Disk usage before build"
           df -h
 
-          ln -s ${WORKSPACE_MNT_OUTPUT_DOTNET_DIR} .dotnet
           ln -s ${WORKSPACE_MNT_OUTPUT_PACKAGES_DIR} .packages
 
           chmod +x ./build.sh
@@ -153,7 +150,6 @@ jobs:
           echo "Disk usage before build"
           df -h
 
-          ln -s ${WORKSPACE_MNT_OUTPUT_DOTNET_DIR} .dotnet
           ln -s ${WORKSPACE_MNT_OUTPUT_PACKAGES_DIR} .packages
 
           chmod +x ./build.sh
