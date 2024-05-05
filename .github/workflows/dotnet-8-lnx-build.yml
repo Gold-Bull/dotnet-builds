@@ -43,15 +43,9 @@ jobs:
       dotnet_version_short: ${{ steps.dotnet_runtime.outputs.dotnet_version_short }}
     env:
       WORKSPACE_CODE_DIR: "${{ github.workspace }}/dotnet"
-      WORKSPACE_PACKAGES_DIR: "${{ github.workspace }}/packages"
-      WORKSPACE_DOWNLOADS_DIR: "${{ github.workspace }}/downloads"
+      WORKSPACE_PACKAGES_DIR: "/mnt/packages"
+      WORKSPACE_DOWNLOADS_DIR: "/mnt/downloads"
     steps:
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 4096
-          swap-size-mb: 16384
-      
       - name: Create required directories
         run: |-
           mkdir -p "${WORKSPACE_CODE_DIR}"
@@ -75,6 +69,9 @@ jobs:
           
           export ROOTFS_DIR="/crossfs/${RUNTIME_ARCH}"
 
+          echo "Disk usage before build"
+          df -h
+
           chmod +x ./build.sh
 
           ./build.sh -subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
@@ -82,49 +79,85 @@ jobs:
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}
 
+          echo "Disk usage after build"
+          df -h
+
+          ls -la "${WORKSPACE_PACKAGES_DIR}"
+          ls -la "${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}"
+
           ./build.sh --clean
-          rm -rf .dotnet/
+          rm -rf ./.dotnet/
+
+          echo "Disk usage after clean"
+          df -h
         working-directory: "${{ env.WORKSPACE_CODE_DIR }}/src/runtime"
 
       - name: Build ASP.NET Core
         run: |-
           export PATH="/opt/nodejs_v14/bin;$PATH"
 
+          echo "Disk usage before build"
+          df -h
+
           chmod +x ./eng/build.sh
 
           ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --no-build-java /p:SkipTestBuild=true /p:DotNetAssetRootUrl=file://${WORKSPACE_DOWNLOADS_DIR}/
+
+          echo "Disk usage after build"
+          df -h
 
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
           cp artifacts/installers/${RUNTIME_CONFIGURATION}/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
           cp artifacts/installers/${RUNTIME_CONFIGURATION}/aspnetcore_base_runtime.version ${WORKSPACE_DOWNLOADS_DIR}/aspnetcore/Runtime/${DOTNET_VERSION_TO_BUILD}
 
           ./eng/build.sh --clean
-          rm -rf .dotnet/
+          rm -rf ./.dotnet/
+
+          echo "Disk usage after clean"
+          df -h
         working-directory: "${{ env.WORKSPACE_CODE_DIR }}/src/aspnetcore"
 
       - name: Build SDK
         run: |-
+          echo "Disk usage before build"
+          df -h
+
           chmod +x ./build.sh
 
           ./build.sh --pack --configuration ${RUNTIME_CONFIGURATION} /p:Architecture=${RUNTIME_ARCH}
+
+          echo "Disk usage after build"
+          df -h
 
           cp artifacts/packages/Release/NonShipping/*.zip ${WORKSPACE_DOWNLOADS_DIR}/Sdk/${DOTNET_SDK_VERSION_TO_BUILD}
           cp artifacts/packages/${SDK_CONF}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
 
           ./build.sh --clean
-          rm -rf .dotnet/
+          rm -rf ./.dotnet/
+
+          echo "Disk usage after clean"
+          df -h
         working-directory: "${{ env.WORKSPACE_CODE_DIR }}/src/sdk"
 
       - name: Build Installer
         run: |-
+          echo "Disk usage before build"
+          df -h
+
           chmod +x ./build.sh
 
           ./build.sh -c ${RUNTIME_CONFIGURATION} -a ${RUNTIME_ARCH} /p:HostRid=linux-x64 /p:PublicBaseURL=file://${WORKSPACE_DOWNLOADS_DIR}/
 
+          echo "Disk usage after build"
+          df -h
+
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}
 
           ./build.sh --clean
-          rm -rf .dotnet/
+          rm -rf ./.dotnet/
+
+          echo "Disk usage after clean"
+          df -h
         working-directory: "${{ env.WORKSPACE_CODE_DIR }}/src/installer"
 
       - name: Upload NuGet Packages
@@ -144,7 +177,10 @@ jobs:
       - name: Cleanup
         if: ${{ always() }}
         run: |-
-          rm -rf "${{ github.workspace }}/*"
+          rm -rf "${WORKSPACE_CODE_DIR}"
+          rm -rf "${WORKSPACE_PACKAGES_DIR}"
+          rm -rf "${WORKSPACE_DOWNLOADS_DIR}"
+
 
   test:
     name: "Test"
