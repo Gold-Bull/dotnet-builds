@@ -94,12 +94,17 @@ jobs:
 
       - name: Build ASP.NET Core
         run: |-
-          export PATH="/opt/nodejs_v14/bin;$PATH"
-
           echo "Disk usage before build"
           df -h
 
+          ls -l /opt/nodejs_v14/bin
+
           chmod +x ./eng/build.sh
+
+          sed -i '4iexport PATH="/opt/nodejs_v14/bin;$PATH"' ./eng/build.sh
+
+          mkdir -p ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
+          cp "${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}/dotnet-runtime-${DOTNET_VERSION_TO_BUILD}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
 
           ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --no-build-java /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:DotNetAssetRootUrl=file://${WORKSPACE_DOWNLOADS_DIR}/
 
