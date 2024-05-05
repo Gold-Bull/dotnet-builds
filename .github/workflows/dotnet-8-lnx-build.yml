@@ -74,7 +74,7 @@ jobs:
 
           chmod +x ./build.sh
 
-          ./build.sh -subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION}
+          ./build.sh -subset mono+libs+host+packs --cross --os ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} /p:MonoEnableLLVM=true
 
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.nupkg ${WORKSPACE_PACKAGES_DIR}
           cp artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/*.tar.gz ${WORKSPACE_DOWNLOADS_DIR}/Runtime/${DOTNET_VERSION_TO_BUILD}
@@ -101,7 +101,7 @@ jobs:
 
           chmod +x ./eng/build.sh
 
-          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --no-build-java /p:SkipTestBuild=true /p:DotNetAssetRootUrl=file://${WORKSPACE_DOWNLOADS_DIR}/
+          ./eng/build.sh --os-name ${RUNTIME_OS} --arch ${RUNTIME_ARCH} --configuration ${RUNTIME_CONFIGURATION} --pack --no-build-java /p:OnlyPackPlatformSpecificPackages=true /p:SkipTestBuild=true /p:DotNetAssetRootUrl=file://${WORKSPACE_DOWNLOADS_DIR}/
 
           echo "Disk usage after build"
           df -h
