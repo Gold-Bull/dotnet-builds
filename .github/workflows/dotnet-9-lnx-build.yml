@@ -57,9 +57,9 @@ jobs:
           
           export ROOTFS_DIR="/crossfs/${RUNTIME_ARCH}"
 
-          chmod +x ./prep.sh
+          chmod +x ./prep-source-build.sh
 
-          ./prep.sh
+          ./prep-source-build.sh
 
           chmod +x ./build.sh
 
