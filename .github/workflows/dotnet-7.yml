@@ -15,7 +15,7 @@ on:
         - releases/v7
 
 env:
-  DOTNET_VERSION: "7.0.19"
+  DOTNET_VERSION: "7.0.20"
 
 jobs:
   pre-execution:
