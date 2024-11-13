@@ -15,7 +15,7 @@ on:
         - releases/v8
 
 env:
-  DOTNET_VERSION: "8.0.8"
+  DOTNET_VERSION: "8.0.10"
 
 jobs:
   pre-execution:
