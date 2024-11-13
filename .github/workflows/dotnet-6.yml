@@ -15,7 +15,7 @@ on:
         - releases/v6
 
 env:
-  DOTNET_VERSION: "6.0.35"
+  DOTNET_VERSION: "6.0.36"
 
 jobs:
   pre-execution:
