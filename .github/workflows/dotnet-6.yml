@@ -22,6 +22,10 @@ jobs:
         architecture:
           - s390x
     name: "Build, Test, Publish (${{ matrix.architecture }})"
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     uses: ./.github/workflows/dotnet-lnx.yml
     with:
       version: "6.0.36"
