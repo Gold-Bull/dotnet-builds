@@ -1,4 +1,4 @@
-name: .NET 7 Build Steps
+name: .NET Build & Publish (Linux)
 
 on:
   workflow_call:
@@ -11,6 +11,11 @@ on:
         description: 'The architecture to build for'
         required: true
         type: string
+      docker_image:
+        description: 'The Docker image to use for building'
+        required: false
+        type: string
+        default: 'ghcr.io/gold-bull/dotnet-build-deps:ubuntu-20.04-latest'
 
 env:
   RUNTIME_OS: linux
@@ -21,7 +26,7 @@ env:
   DOTNET_VERSION_TO_BUILD: "${{ inputs.version }}"
   RUNTIME_ARCH: "${{ inputs.architecture }}"
   PLATFORMS_TO_BUILD: "linux/${{ inputs.architecture }}"
-  DOCKER_IMAGE_TO_USE: "ghcr.io/gold-bull/dotnet-build-deps:ubuntu-18.04-latest"
+  DOCKER_IMAGE_TO_USE: "${{ inputs.docker_image }}"
 
 jobs:
   build:
@@ -31,7 +36,7 @@ jobs:
       run:
         shell: bash
     outputs:
-      dotnet_sdk_version: ${{ steps.dotnet_runtime.outputs.dotnet_sdk_version }}
+      dotnet_version: ${{ steps.dotnet_runtime.outputs.dotnet_version }}
     steps:
       - name: Checkout .NET Runtime repo
         uses: actions/checkout@v4
@@ -52,11 +57,11 @@ jobs:
       - name: Build .NET Runtime
         id: dotnet_runtime
         run: |-
-          echo "dotnet_sdk_version=${DOTNET_VERSION_TO_BUILD:0:3}" >> "$GITHUB_OUTPUT"
+          echo "dotnet_version=${DOTNET_VERSION_TO_BUILD:0:3}" >> "$GITHUB_OUTPUT"
           chmod +x ./build.sh
 
           docker run -i --rm \
-            --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
+            --env ROOTFS_DIR="/crossfs/${RUNTIME_ARCH}" \
             --mount type=bind,src="${{ github.workspace }}/dotnet",dst=/dotnet \
             --workdir /dotnet/src/runtime \
             --network=host \
@@ -90,7 +95,7 @@ jobs:
           cp "${{ github.workspace }}/dotnet/src/runtime/artifacts/packages/${RUNTIME_CONFIGURATION}/Shipping/dotnet-runtime-${DOTNET_VERSION_TO_BUILD}-${RUNTIME_OS}-${RUNTIME_ARCH}.tar.gz" ./artifacts/obj/Microsoft.AspNetCore.App.Runtime/
 
           docker run -i --rm \
-            --env ROOTFS_DIR="/crossfs/${{ env.RUNTIME_ARCH }}" \
+            --env ROOTFS_DIR="/crossfs/${RUNTIME_ARCH}" \
             --mount type=bind,src="${{ github.workspace }}/dotnet",dst=/dotnet \
             --workdir /dotnet/src/aspnetcore \
             --network=host \
@@ -145,9 +150,65 @@ jobs:
           platforms: ${{ env.PLATFORMS_TO_BUILD }}
           provenance: false
           context: "${{ github.workspace }}"
-          file: "${{ github.workspace }}/tests/${{ needs.build.outputs.dotnet_sdk_version }}/simple/Dockerfile"
+          file: "${{ github.workspace }}/tests/${{ needs.build.outputs.dotnet_version }}/simple/Dockerfile"
           push: false
           builder: ${{ steps.setup_buildx.outputs.name }}
           build-args: |
             RUNTIME_FRAMEWORK_VERSION=${{ inputs.version }}
-            DOTNET_SDK_VERSION=${{ needs.build.outputs.dotnet_sdk_version }}
+            DOTNET_VERSION=${{ needs.build.outputs.dotnet_version }}
+
+  publish:
+    name: "Publish"
+    if: ${{ github.ref_type == 'tag' }}
+
+    environment: packages-publish
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: nuget-packages-${{ env.RUNTIME_ARCH }}-*
+          merge-multiple: true
+          path: "${{ github.workspace }}/nuget"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: archives-${{ env.RUNTIME_ARCH }}-*
+          merge-multiple: true
+          path: "${{ github.workspace }}/archives"
+
+      - name: Upload Packages
+        run: |
+          rm -f *.symbols.nupkg
+          
+          dotnet nuget push "*.nupkg" \
+          --api-key ${{ secrets.GITHUB_TOKEN }} \
+          --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+        working-directory: "${{ github.workspace }}/nuget"
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Upload archives to blob
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az storage blob upload-batch \
+            --destination dotnet \
+            --source "${{ github.workspace }}/archives/" \
+            --account-name sasgrsv2cind59037 \
+            --auth-mode login \
+            --destination-path "${{ env.DOTNET_VERSION_TO_BUILD }}/" \
+            --pattern "*.tar.gz" \
+            --validate-content

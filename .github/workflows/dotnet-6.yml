@@ -5,101 +5,29 @@ on:
       branches:
         - main
         - feature/*
-        - releases/v6
+      tags:
+        - "[0-9]+-[0-9]+-[0-9]+"
       paths:
-        - ".github/workflows/dotnet-6*.yml"
+        - ".github/workflows/dotnet-6.yml"
+        - ".github/workflows/dotnet-lnx.yml"
         - "tests/6.0/**"
   pull_request:
       branches:
         - main
-        - releases/v6
-
-env:
-  DOTNET_VERSION: "6.0.33"
 
 jobs:
-  pre-execution:
-    name: "Pre-execution"
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    outputs:
-      dotnet_version: ${{ steps.information.outputs.dotnet_version }}
-    steps:
-      - name: Gather Information
-        id: information
-        run: |-
-          echo "dotnet_version=${{ env.DOTNET_VERSION }}" >> "$GITHUB_OUTPUT"
-
-  build-test:
-    needs:
-      - pre-execution
+  build-test-publish:
     strategy:
       matrix:
         architecture:
           - s390x
-    name: "Build & Test (${{ matrix.architecture }})"
-    uses: ./.github/workflows/dotnet-6-lnx-build.yml
-    with:
-      architecture: ${{ matrix.architecture }}
-      version: ${{ needs.pre-execution.outputs.dotnet_version }}
-
-  publish:
-    name: "Publish"
-    if: ${{ github.ref == 'refs/heads/releases/v6' }}
-
-    environment: packages-publish
-    needs:
-      - pre-execution
-      - build-test
+    name: "Build, Test, Publish (${{ matrix.architecture }})"
     permissions:
       contents: read
       packages: write
       id-token: write
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: nuget-packages-*
-          merge-multiple: true
-          path: "${{ github.workspace }}/nuget"
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: archives-*
-          merge-multiple: true
-          path: "${{ github.workspace }}/archives"
-
-      - name: Upload Packages
-        run: |
-          rm -f *.symbols.nupkg
-          
-          dotnet nuget push "*.nupkg" \
-          --api-key ${{ secrets.GITHUB_TOKEN }} \
-          --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
-        working-directory: "${{ github.workspace }}/nuget"
-
-      - name: Azure login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          allow-no-subscriptions: true
-
-      - name: Upload archives to blob
-        uses: azure/cli@v2
-        with:
-          azcliversion: latest
-          inlineScript: |
-            az storage blob upload-batch \
-            --destination dotnet \
-            --source "${{ github.workspace }}/archives/" \
-            --account-name sasgrsv2cind59037 \
-            --auth-mode login \
-            --destination-path "${{ needs.pre-execution.outputs.dotnet_version }}/" \
-            --pattern "*.tar.gz" \
-            --validate-content
+    uses: ./.github/workflows/dotnet-lnx.yml
+    with:
+      version: "6.0.36"
+      architecture: ${{ matrix.architecture }}
+      docker_image: 'ghcr.io/gold-bull/dotnet-build-deps:ubuntu-18.04-latest'
