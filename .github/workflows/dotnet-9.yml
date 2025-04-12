@@ -28,6 +28,6 @@ jobs:
       id-token: write
     uses: ./.github/workflows/dotnet-lnx.yml
     with:
-      version: "9.0.0"
+      version: "9.0.1"
       architecture: ${{ matrix.architecture }}
       docker_image: 'ghcr.io/gold-bull/dotnet-build-deps:ubuntu-20.04-latest'
