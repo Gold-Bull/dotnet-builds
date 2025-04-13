@@ -155,7 +155,7 @@ jobs:
           builder: ${{ steps.setup_buildx.outputs.name }}
           build-args: |
             RUNTIME_FRAMEWORK_VERSION=${{ inputs.version }}
-            DOTNET_VERSION=${{ needs.build.outputs.dotnet_version }}
+            DOTNET_SDK_VERSION=${{ needs.build.outputs.dotnet_version }}
 
   publish:
     name: "Publish"
